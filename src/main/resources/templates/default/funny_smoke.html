@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="UTF-8">
+  <title>Weather Report Probability</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+  <style>
+    body {
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background: linear-gradient(to bottom, #e6f7ff, #b3e0ff); /* Нежно-голубой градиент */
+        font-family: Arial, sans-serif;
+        overflow: hidden;
+    }
+
+    .container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        max-width: 1200px;
+        padding: 20px;
+        justify-content: center;
+        z-index:1;
+    }
+    .region {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        width: 200px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .animation {
+        width: 100px;
+        height: 100px;
+        margin: 0 auto;
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center center;
+    }
+
+    /* Неоновые надписи */
+    .neon-text {
+        font-size: 24px;
+        color: #fff;
+        text-shadow: 0 0 5px #00ffea, 0 0 10px #00ffea, 0 0 20px #00ffea, 0 0 40px #00ffea;
+        animation: neonGlow 1.5s infinite alternate;
+    }
+
+    @keyframes neonGlow {
+        from {
+            text-shadow: 0 0 5px #00ffea, 0 0 10px #00ffea, 0 0 20px #00ffea, 0 0 40px #00ffea;
+        }
+        to {
+            text-shadow: 0 0 10px #00ffea, 0 0 20px #00ffea, 0 0 40px #00ffea, 0 0 80px #00ffea;
+        }
+    }
+
+    /* Неоновые элементы */
+    .neon-box {
+        position: absolute;
+        width: 100px;
+        height: 100px;
+        background: rgba(0, 255, 234, 0.1);
+        border: 2px solid #00ffea;
+        box-shadow: 0 0 10px #00ffea, 0 0 20px #00ffea;
+        animation: neonBoxGlow 2s infinite alternate;
+    }
+
+    @keyframes neonBoxGlow {
+        from {
+            box-shadow: 0 0 10px #00ffea, 0 0 20px #00ffea;
+        }
+        to {
+            box-shadow: 0 0 20px #00ffea, 0 0 40px #00ffea;
+        }
+    }
+
+    /* Дополнительные декоративные элементы */
+    .decorative-element {
+        position: absolute;
+        width: 50px;
+        height: 50px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        animation: float 5s infinite ease-in-out;
+    }
+
+    @keyframes float {
+        0%, 100% {
+            transform: translateY(0);
+        }
+        50% {
+            transform: translateY(-20px);
+        }
+    }
+
+            /* Стили для бокового меню */
+            .menu {
+                position: fixed;
+                width: 60px;
+                height: 100vh;
+                background-color: rgba(255, 255, 255, 0.8);
+                z-index: 2;
+                top: 0;
+                left: 0;
+                border-radius: 0;
+                transition: width 0.3s ease;
+            }
+
+            .menu.open {
+                width: 240px;
+            }
+
+            .menu .actionBar {
+                width: 100%;
+                height: 10%;
+                padding: 0.5rem;
+                overflow: hidden;
+            }
+
+            .menu .actionBar div {
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: space-around;
+                border-radius: 0.5rem;
+                transition: 0.3s ease;
+            }
+
+            .menu .actionBar div button {
+                background-color: transparent;
+                outline: none;
+                border: none;
+                border-radius: 0.5rem;
+                color: #000;
+                width: 45px;
+                height: 45px;
+                transition: 0.3s ease;
+                font-size: 1rem;
+                cursor: pointer;
+            }
+
+            .menu .actionBar div button:hover {
+                background-color: rgba(0, 0, 0, 0.1);
+            }
+
+            .menu .optionsBar {
+                overflow: hidden;
+                display: flex;
+                width: 100%;
+                height: 60%;
+                padding: 0 0.5rem;
+                align-items: center;
+                flex-direction: column;
+            }
+
+            .menu .optionsBar .menuItem {
+                width: 100%;
+                height: 45px;
+                margin: 0.3rem;
+            }
+
+            .menu .optionsBar .menuItem .menuOption {
+                font-size: 1rem;
+                outline: none;
+                border: none;
+                background-color: transparent;
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: space-around;
+                border-radius: 0.5rem;
+                transition: 0.3s ease;
+                cursor: pointer;
+            }
+
+            .menu .optionsBar .menuItem .menuOption:hover {
+                background-color: rgba(0, 0, 0, 0.1);
+            }
+
+            .menu .optionsBar .menuItem .menuOption i {
+                width: 45px;
+                text-align: center;
+                color: #000;
+            }
+
+            .menu .optionsBar .menuItem .menuOption h5 {
+                width: calc(100% - 45px);
+            }
+
+            .menuText {
+                color: #000;
+                transform: translateX(-250px);
+                opacity: 0;
+                transition: transform 0.3s ease 0.1s;
+            }
+
+            .menuText.open2 {
+                opacity: 1;
+                transform: translateX(0);
+            }
+
+            .menu .menuBreak {
+                width: 100%;
+                height: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .menu .menuBreak hr {
+                width: 50%;
+                height: 3px;
+                background-color: #000;
+                border: none;
+                border-radius: 5px;
+            }
+
+            .menu .menuUser {
+                width: 100%;
+                height: 10px;
+                padding: 4.5rem 0 3rem 0;
+            }
+
+            .menu .menuUser a {
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                text-decoration: none;
+                padding: 0.5rem;
+                position: relative;
+            }
+
+            .menu .menuUser a div {
+                width: 45px;
+                height: 45px;
+                position: relative;
+                border-radius: 50%;
+                overflow: hidden;
+            }
+
+            .menu .menuUser a div img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                border-radius: 50%;
+            }
+
+            .menu .menuUser a .username {
+                width: calc(70% - 45px);
+            }
+
+            .menu .menuUser a p {
+                width: calc(30% - 45px);
+            }
+
+            .menu .menuUser a:hover p {
+                animation: animArrow 0.3s ease 2;
+            }
+
+            @keyframes animArrow {
+                0% { transform: translateX(0); }
+                50% { transform: translateX(5px); }
+                100% { transform: translateX(0); }
+            }
+
+            .menu .menuUser .userInfo {
+                position: absolute;
+                width: 10rem;
+                height: 8rem;
+                opacity: 0;
+                color: #000;
+                pointer-events: none;
+                top: 58%;
+                left: 1.5rem;
+                transition: 0.3s ease;
+                transform: scale(0);
+                transform-origin: bottom left;
+            }
+
+            .menu .menuUser .userInfo div {
+                position: relative;
+                width: 100%;
+                height: calc(100% - 20px);
+                box-shadow: 0px 0px 40px rgba(0, 0, 0, 0.3);
+                background-color: #fff;
+                border-top-left-radius: 1rem;
+                border-top-right-radius: 1rem;
+                border-bottom-right-radius: 1rem;
+                padding: 1rem;
+                display: flex;
+                align-items: center;
+                justify-content: space-around;
+                flex-direction: column;
+            }
+
+            .menu .menuUser .userInfo div h1 {
+                font-size: 4rem;
+            }
+
+            .menu .menuUser .userInfo div::before {
+                content: '';
+                position: absolute;
+                bottom: -18px;
+                left: -2px;
+                width: 0;
+                height: 0;
+                border-top: 15px solid transparent;
+                border-bottom: 15px solid transparent;
+                border-right: 15px solid #fff;
+                transform: rotate(45deg);
+            }
+
+            .menu .menuUser:hover .userInfo {
+                pointer-events: all;
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            .menu .themeBar {
+                overflow: hidden;
+                width: 100%;
+                height: 10%;
+                padding: 0.5rem;
+            }
+
+            .menu .themeBar div {
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: space-around;
+                border-radius: 0.5rem;
+                transition: 0.3s ease;
+            }
+
+            .menu .themeBar div button {
+                background-color: transparent;
+                outline: none;
+                border: none;
+                border-radius: 0.5rem;
+                color: #000;
+                width: 100%;
+                height: 45px;
+                transition: 0.3s ease;
+                font-size: 1rem;
+            }
+
+            .menu .themeBar div button:hover {
+                background-color: rgba(0, 0, 0, 0.1);
+            }
+                body.dark {
+              --bg-black100: #fff;
+              --bg-black50: #000;
+              --bg-black20: #eef0f4;
+            }
+
+            /* Стили для картинок цветов */
+            .flower-top-left {
+              position: absolute;
+              top: 0;
+              left: 0;
+              width: 150px; /* Размер картинки */
+              height: auto;
+              z-index: 1; /* Чтобы картинка была поверх других элементов */
+            }
+
+            .flower-bottom-right {
+              position: absolute;
+              bottom: -10px;
+              right: 145px;
+              width: 400px; /* Размер картинки */
+              height: auto;
+              z-index: 1; /* Чтобы картинка была поверх других элементов */
+            }
+             .flower-bottom-right2 {
+              position: absolute;
+              bottom: 150px;
+              right: 0px;
+              width: 400px; /* Размер картинки */
+              height: auto;
+              z-index: 0.99; /* Чтобы картинка была поверх других элементов */
+            }
+  </style>
+</head>
+<body>
+<div class="decorative-cube" style="top: 10%; left: 10%;"></div>
+<div class="decorative-cross" style="top: 20%; right: 10%;"></div>
+<div class="decorative-cross" style="top: 40%; left: 20%;"></div>
+<div class="decorative-cube" style="top: 40%; right: 20%;"></div>
+
+<img src="https://static.vecteezy.com/system/resources/previews/027/382/511/non_2x/isolated-pressed-and-dried-pink-peony-flower-aesthetic-scrapbooking-dry-plants-free-png.png" alt="Flower Bottom Right" class="flower-bottom-right">
+<img src="https://www.pngplay.com/wp-content/uploads/13/Aesthetic-Flower-PNG-Images-HD.png" alt="Flower Bottom Right" class="flower-bottom-right2">
+
+<nav id="menu" class="menu">
+  <div class="actionBar">
+    <div>
+      <button id="menuBtn">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+      <h3 class="menuText">Меню</h3>
+    </div>
+  </div>
+  <ul class="optionsBar">
+    <li class="menuItem">
+      <a th:href="@{/main}" class="menuOption">
+        <i class="fa-solid fa-house"></i><h5 class="menuText">Телеграм</h5>
+      </a>
+    </li>
+    <li class="menuBreak">
+      <hr>
+    </li>
+    <li class="menuItem">
+      <a th:href="@{/analytics}" class="menuOption">
+        <i class="fa-solid fa-shopping-bag"></i>
+        <h5 class="menuText">Аналитика</h5>
+      </a>
+    </li>
+
+    <li class="menuItem">
+      <button id="constantManagerBtn" class="menuOption">
+        <i class="fa-solid fa-border-all"></i>
+        <h5 class="menuText" th:href="@{/smoke}">Нод-система</h5>
+      </button>
+    </li>
+    <div class="menuUser">
+      <a href="#">
+        <div>
+          <img src="https://images.mein-mmo.de/medien/2025/04/Schedule-1-Cheats-Konsole-Titelbild.jpg" alt="image">
+        </div>
+        <h5 class="username menuText">Alex</h5>
+        <p class="menuText"><i class="fa-solid fa-chevron-right"></i></p>
+      </a>
+      <div class="userInfo">
+        <div>
+          <h1><i class="fa-solid fa-exclamation-circle"></i></h1>
+          <p>User Info</p>
+        </div>
+      </div>
+    </div>
+    <div class="themeBar">
+      <div>
+        <button id="themeChangeBtn"><i class="fa-solid "></i></button>
+      </div>
+    </div>
+  </ul>
+</nav>
+<div class="container">
+  <!-- Регионы будут добавлены динамически -->
+</div>
+</body>
+
+<script>
+  const accessKey = '---------------'; // Ваш API-ключ
+const regions = [
+    { name: 'Кавказ', lat: 43.0367, lon: 43.3767 },
+    { name: 'Север', lat: 64.5361, lon: 40.5469 },
+    { name: 'Центр', lat: 55.7558, lon: 37.6176 },
+    { name: 'Юг', lat: 45.0355, lon: 38.9753 },
+    { name: 'ТСК', lat: 56.8333, lon: 60.5833 },
+    { name: 'АО Кропоткинское', lat: 45.4333, lon: 40.5667 },
+    { name: 'Восход', lat: 55.3167, lon: 38.6833 },
+    { name: 'Колхоз Прогресс', lat: 55.9167, lon: 37.8333 },
+    { name: 'Мир', lat: 54.7833, lon: 32.05 },
+    { name: 'СП Коломейцево', lat: 55.0833, lon: 38.7667 }
+];
+
+const container = document.querySelector('.container');
+
+regions.forEach(region => {
+    const url = `https://api.weather.yandex.ru/v2/forecast?lat=${region.lat}&lon=${region.lon}`;
+    const headers = {
+        'X-Yandex-Weather-Key': accessKey
+    };
+
+    fetch(url, { headers })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Ошибка при запросе к серверу');
+            }
+            return response.json();
+        })
+        .then(weather => {
+            const temperature = weather.fact.temp; // Текущая температура
+            const probability = calculateProbability(temperature); // Новая логика расчета
+            const iconUrl = weather.fact.icon; // URL иконки погоды
+
+            const regionDiv = document.createElement('div');
+            regionDiv.className = 'region';
+            regionDiv.innerHTML = `
+                <h3>${region.name}</h3>
+                <div class="animation" style="background-image: url('https://yastatic.net/weather/i/icons/confident/dark/svg/bkn_n.svg');"></div>
+                <p>Температура: ${temperature}°C</p>
+                <p>Вероятность отчетов: ${probability}%</p>
+            `;
+            container.appendChild(regionDiv);
+        })
+        .catch(error => {
+            console.error('Ошибка:', error);
+            const regionDiv = document.createElement('div');
+            regionDiv.className = 'region';
+            regionDiv.innerHTML = `
+                <h3>${region.name}</h3>
+                <p style="color: red;">Ошибка при загрузке данных</p>
+            `;
+            container.appendChild(regionDiv);
+        });
+});
+
+function calculateProbability(temperature) {
+    if (temperature > 17) {
+        return 90; // Если температура больше 30°C, вероятность 90%
+    } else if (temperature > 10) {
+        return 70; // Если температура больше 15°C, вероятность 70%
+    } else {
+        return 58 + Math.floor(Math.random() * 20) + 1;
+    }
+}
+
+// Логика для бокового меню
+const menuBtn = document.getElementById('menuBtn');
+const menu = document.getElementById('menu');
+const menuText = document.querySelectorAll('.menuText');
+
+menuBtn.addEventListener('click', () => {
+    menu.classList.toggle('open');
+    menuText.forEach(function (text, index) {
+        setTimeout(() => {
+            text.classList.toggle('open2');
+        }, index * 50);
+    });
+});
+
+// Закрытие меню при клике вне его области
+document.addEventListener('click', (e) => {
+    if (!menu.contains(e.target) && !menuBtn.contains(e.target)) {
+        menu.classList.remove('open');
+        menuText.forEach((text) => {
+            text.classList.remove('open2');
+        });
+    }
+});
+
+</script>
+</html>

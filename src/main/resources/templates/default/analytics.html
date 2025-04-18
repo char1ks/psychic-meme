@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Аналитика</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <link rel="stylesheet" href="https://cdn.dhtmlx.com/gantt/edge/dhtmlxgantt.css" type="text/css">
+    <script src="https://cdn.dhtmlx.com/gantt/edge/dhtmlxgantt.js" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+
+    <style>
+        /* Основные стили */
+        :root {
+          --bg-black100: #353535;
+          --bg-black50: #eef0f4;
+          --bg-black20: #414546;
+        }
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+        body {
+          overflow: hidden;
+          display: flex;
+          height: 100vh;
+          background-color: var(--bg-black50);
+          font-family: sans-serif;
+        }
+        body.dark {
+          --bg-black100: #fff;
+          --bg-black50: #000;
+          --bg-black20: #eef0f4;
+        }
+        /* Стили для меню */
+        .menu {
+          width: 60px;
+          height: 100vh;
+          background-color: var(--bg-black50);
+          z-index: 2;
+          border-radius: .8rem;
+          transition: .3s ease .15s;
+          padding: 10px;
+        }
+        .menu.open { width: 240px; }
+        .menu a { text-decoration: none; }
+        .menu .actionBar {
+          width: 100%;
+          height: 10%;
+          padding: 0.5rem;
+          overflow: hidden;
+        }
+        .menu .actionBar div {
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: space-around;
+          border-radius: .5rem;
+          transition: .3s ease;
+        }
+        .menu .actionBar div button {
+          background-color: transparent;
+          outline: none;
+          border: none;
+          border-radius: .5rem;
+          color: var(--bg-black100);
+          width: 45px;
+          height: 45px;
+          transition: .3s ease;
+          font-size: 1rem;
+          cursor: pointer;
+        }
+        .menu .actionBar div button:hover { background-color: rgb(132, 0, 255); }
+        .menu .optionsBar {
+          overflow: hidden;
+          display: flex;
+          width: 100%;
+          height: 60%;
+          padding: 0 .5rem;
+          align-items: center;
+          flex-direction: column;
+        }
+        .menu .optionsBar .menuItem {
+          width: 100%;
+          height: 45px;
+          margin: 0.3rem;
+        }
+        .menu .optionsBar .menuItem .menuOption {
+          font-size: 1rem;
+          outline: none;
+          border: none;
+          background-color: transparent;
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: space-around;
+          border-radius: .5rem;
+          transition: .3s ease;
+          cursor: pointer;
+        }
+        .menu .optionsBar .menuItem .menuOption:hover { background-color: rgb(132, 0, 255); }
+        .menu .optionsBar .menuItem .menuOption i { width: 45px; text-align: center; color: var(--bg-black100); }
+        .menu .optionsBar .menuItem .menuOption h5 { width: calc(100% - 45px); }
+        .menuText {
+          color: var(--bg-black20);
+          transform: translateX(-250px);
+          opacity: 0;
+          transition: transform .3s ease .1s;
+        }
+        .menuText.open2 {
+          opacity: 1,
+          transform: translateX(0);
+        }
+        .menu .menuBreak {
+          width: 100%;
+          height: 10px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .menu .menuBreak hr {
+          width: 50%;
+          height: 3px;
+          background-color: var(--bg-black100);
+          border: none;
+          border-radius: 5px;
+        }
+        .menu .themeBar {
+          overflow: hidden;
+          width: 100%;
+          height: 10%;
+          padding: .5rem;
+        }
+        .menu .themeBar div {
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: space-around;
+          border-radius: .5rem;
+          transition: .3s ease;
+        }
+        .menu .themeBar div button {
+          background-color: transparent;
+          outline: none;
+          border: none;
+          border-radius: .5rem;
+          color: var(--bg-black100);
+          width: 100%;
+          height: 45px;
+          transition: .3s ease;
+          font-size: 1rem;
+        }
+        .menu .themeBar div button:hover { background-color: rgb(132, 0, 255); }
+        /* Стили для контента */
+        .content {
+          flex-grow: 1;
+          padding: 20px;
+          overflow-y: auto;
+        }
+        .chart-container {
+          margin-bottom: 40px;
+        }
+        .chart-container h2 {
+          margin-bottom: 20px;
+          color: var(--bg-black100);
+        }
+        .chart {
+          background-color: white;
+          padding: 20px;
+          border-radius: 10px;
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+<nav id="menu" class="menu">
+    <div class="actionBar">
+        <div>
+            <button id="menuBtn">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            <h3 class="menuText">Меню</h3>
+        </div>
+    </div>
+    <ul class="optionsBar">
+        <li class="menuItem">
+            <a th:href="@{/main}" class="menuOption">
+                <i class="fa-solid fa-house"></i><h5 class="menuText">Главная</h5>
+            </a>
+        </li>
+        <li class="menuBreak">
+            <hr>
+        </li>
+        <li class="menuItem">
+            <button id="analyticsBtn" class="menuOption" th:href="@{/analytics}">
+                <i class="fa-solid fa-chart-line"></i><h5 class="menuText">Аналитика</h5>
+            </button>
+        </li>
+        <li class="menuItem">
+
+            <button id="graphBtn" class="menuOption">
+                <a th:href="@{/smoke}">
+                <i class="fa-solid fa-project-diagram"></i><h5 class="menuText">Граф</h5>
+                </a>
+            </button>
+        </li>
+        <li class="menuItem">
+            <button id="ganttBtn" class="menuOption">
+                <i class="fa-solid fa-calendar-days"></i><h5 class="menuText">Диаграмма Ганта</h5>
+            </button>
+        </li>
+    </ul>
+    <div class="themeBar">
+        <div>
+            <button id="themeChangeBtn"><i class="fa-solid fa-moon"></i></button>
+        </div>
+    </div>
+</nav>
+<div class="content">
+    <div class="chart-container">
+        <h2>Динамика выполнения операций по дням</h2>
+        <div class="chart">
+            <canvas id="linearChart"></canvas>
+        </div>
+    </div>
+    <div class="chart-container">
+        <h2>Динамика валового сбора по дням</h2>
+        <div class="chart">
+            <canvas id="secondLinearChart"></canvas>
+        </div>
+    </div>
+    <div class="chart-container">
+        <h2>Погода/вероятность</h2>
+        <div class="chart">
+            <div id="graph"></div>
+        </div>
+    </div>
+    <div class="chart-container">
+        <h2>Диаграмма Ганта</h2>
+        <div id="ganttChart" style="width: 100%; height: 400px;"></div>
+    </div>
+</div>
+<script>
+    // Инициализация переменных для графиков
+    let linearChartData = {
+        labels: [],
+        datasets: [
+            {
+                label: "За день, га",
+                data: [],
+                borderColor: "rgba(75, 192, 192, 1)",
+                fill: false,
+            },
+            {
+                label: "С начала операции, га",
+                data: [],
+                borderColor: "rgba(153, 102, 255, 1)",
+                fill: false,
+            },
+        ],
+    };
+
+    let secondLinearChartData = {
+        labels: [],
+        datasets: [
+            {
+                label: "Вал за день, ц",
+                data: [],
+                borderColor: "rgba(255, 99, 132, 1)",
+                fill: false,
+            },
+            {
+                label: "Вал с начала, ц",
+                data: [],
+                borderColor: "rgba(54, 162, 235, 1)",
+                fill: false,
+            },
+        ],
+    };
+
+    let graphData = {
+        nodes: [],
+        links: [],
+    };
+
+    // Инициализация графиков
+    const linearChartCtx = document.getElementById("linearChart").getContext("2d");
+    const linearChart = new Chart(linearChartCtx, {
+        type: "line",
+        data: linearChartData,
+        options: {
+            responsive: true,
+            scales: {
+                y: { beginAtZero: true },
+            },
+        },
+    });
+
+    const secondLinearChartCtx = document.getElementById("secondLinearChart").getContext("2d");
+    const secondLinearChart = new Chart(secondLinearChartCtx, {
+        type: "line", // Исправлено
+        data: secondLinearChartData,
+        options: {
+            responsive: true,
+            scales: {
+                y: { beginAtZero: true },
+            },
+        },
+    });
+
+    // Инициализация графа
+    const graphSvg = d3.select("#graph").append("svg")
+        .attr("width", 1200)
+        .attr("height", 400)
+        .append("g")  // Все элементы будут внутри g
+        .attr("class", "zoom-group")  // Добавляем класс для zoom группы
+        .call(d3.zoom().scaleExtent([0.5, 5]).on("zoom", (event) => {
+            d3.select(".zoom-group").attr("transform", event.transform);  // Применение трансформации для масштабирования и перемещения
+        }));
+   const zoomBehavior = d3.zoom()
+       .scaleExtent([0.5, 5]) // Задаем диапазон масштабирования
+       .on("zoom", (event) => {
+           graphSvg.attr("transform", event.transform); // Применение трансформации для масштабирования
+       });
+
+   graphSvg.call(zoomBehavior); // Подключаем масштабирование к графу
+
+    // Инициализация переменных для графиков
+
+
+    const simulation = d3.forceSimulation(graphData.nodes)
+        .force("link", d3.forceLink(graphData.links).id((d) => d.id))
+        .force("charge", d3.forceManyBody())
+        .force("center", d3.forceCenter(300, 200));
+
+    // Функция для выполнения GET-запросов
+    async function fetchData(url) {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Ошибка при запросе данных: ${response.statusText}`);
+        }
+        return response.json();
+    }
+
+    // Функция для парсинга дат из разных форматов
+    function parseDate(dateString) {
+        if (!dateString) return new Date(); // Если дата отсутствует, возвращаем текущую дату
+
+        // Попробуем разные форматы дат
+        const formats = [
+            "DD/MM/YYYY", "MM/DD/YYYY", "YYYY/MM/DD",
+            "DD-MM-YYYY", "MM-DD-YYYY", "YYYY-MM-DD",
+            "DD.MM.YYYY", "MM.DD.YYYY", "YYYY.MM.DD"
+        ];
+
+        for (const format of formats) {
+            const parts = format.split(/[\/\-\.]/);
+            const dateParts = dateString.split(/[\/\-\.]/);
+
+            if (dateParts.length === parts.length) {
+                const dateMap = {};
+                parts.forEach((part, index) => {
+                    dateMap[part] = dateParts[index];
+                });
+
+                const year = dateMap["YYYY"] || new Date().getFullYear();
+                const month = (dateMap["MM"] || dateMap["MM"]) - 1; // Месяцы в JS начинаются с 0
+                const day = dateMap["DD"] || 1;
+
+                const date = new Date(year, month, day);
+                if (!isNaN(date.getTime())) {
+                    return date;
+                }
+            }
+        }
+
+        // Если ни один формат не подошел, возвращаем текущую дату
+        return new Date();
+    }
+
+    // Функция для обновления линейной диаграммы
+    async function updateLinearChart() {
+        try {
+            const data = await fetchData('/api/info/linear-chart');
+            if (!data || data.length === 0) {
+                console.warn('Нет данных для линейной диаграммы');
+                return;
+            }
+
+            const labels = data.map(item => item[0] || ''); // Даты
+            const perDayData = data.map(item => parseFloat(item[1]) || 0); // Данные за день
+            const totalData = data.map(item => parseFloat(item[2]) || 0); // Данные с начала операции
+
+            linearChartData.labels = labels;
+            linearChartData.datasets[0].data = perDayData;
+            linearChartData.datasets[1].data = totalData;
+            linearChart.update();
+        } catch (error) {
+            console.error('Ошибка при обновлении линейной диаграммы:', error);
+        }
+    }
+
+    // Функция для обновления второй линейной диаграммы
+    async function updateSecondLinearChart() {
+        try {
+            const data = await fetchData('/api/info/second-linear-chart');
+            if (!data || data.length === 0) {
+                console.warn('Нет данных для второй линейной диаграммы');
+                return;
+            }
+
+            const labels = data.map(item => item[0] || ''); // Даты
+            const perDayData = data.map(item => parseFloat(item[1]) || 0); // Вал за день
+            const totalData = data.map(item => parseFloat(item[2]) || 0); // Вал с начала
+
+            secondLinearChartData.labels = labels;
+            secondLinearChartData.datasets[0].data = perDayData;
+            secondLinearChartData.datasets[1].data = totalData;
+            secondLinearChart.update();
+        } catch (error) {
+            console.error('Ошибка при обновлении второй линейной диаграммы:', error);
+        }
+    }
+    // Функция для перетаскивания узлов
+function dragstarted(event, d) {
+    if (!event.active) simulation.alphaTarget(0.3).restart();
+    d.fx = d.x; // Привязываем узел к текущей позиции
+    d.fy = d.y;
+}
+
+function dragged(event, d) {
+    d.fx = event.x; // Устанавливаем новую позицию для узла
+    d.fy = event.y;
+}
+
+function dragended(event, d) {
+    if (!event.active) simulation.alphaTarget(0);
+    d.fx = null; // Убираем привязку
+    d.fy = null;
+}
+// Функция для обновления графа
+async function updateGraph() {
+    try {
+        const data = await fetchData('/api/info/graph');
+        if (!data || data.length === 0) {
+            console.warn('Нет данных для графа');
+            return;
+        }
+
+        // Создаем узлы и связи
+        const nodes = data.map((item, index) => ({ id: index, name: item[0] || 'Неизвестно' })); // Узлы (подразделения)
+        const links = data.map(item => ({
+            source: nodes.find(node => node.name === item[1])?.id || 0, // Источник (подразделение)
+            target: nodes.find(node => node.name === item[2])?.id || 0 // Цель (операция)
+        }));
+
+        graphData.nodes = nodes;
+        graphData.links = links;
+
+        // Очищаем SVG перед перерисовкой
+        graphSvg.selectAll("*").remove();
+
+        // Создаем линии для связей
+        const link = graphSvg
+            .selectAll("line")
+            .data(graphData.links)
+            .enter()
+            .append("line")
+            .attr("stroke", "#999")
+            .attr("stroke-width", 2);
+
+        // Создаем круги для узлов
+        const node = graphSvg
+            .selectAll("circle")
+            .data(graphData.nodes)
+            .enter()
+            .append("circle")
+            .attr("r", 10)
+            .attr("fill", "#69b3a2")
+            .call(d3.drag() // Перетаскивание узлов
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended)
+            );
+
+        // Добавляем текст для узлов
+        const text = graphSvg
+            .selectAll("text")
+            .data(graphData.nodes)
+            .enter()
+            .append("text")
+            .text(d => d.name)
+            .attr("x", (d, i) => (d.x || 0) + 15) // Добавляем текст смещения
+            .attr("y", (d, i) => (d.y || 0) + 5)
+            .attr("font-size", "12px")
+            .attr("fill", "#333");
+
+        // Обновляем симуляцию
+        simulation.nodes(graphData.nodes);
+        simulation.force("link").links(graphData.links);
+        simulation.alpha(1).restart();
+
+        // Обновляем позиции узлов и текста
+        simulation.on("tick", () => {
+            link.attr("x1", d => d.source.x)
+                .attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x)
+                .attr("y2", d => d.target.y);
+
+            node.attr("cx", d => d.x)
+                .attr("cy", d => d.y);
+
+            text.attr("x", d => d.x + 15)
+                .attr("y", d => d.y + 5);
+        });
+
+    } catch (error) {
+        console.error('Ошибка при обновлении графа:', error);
+    }
+}
+
+    // Функция для обновления диаграммы Ганта
+    async function updateGanttChart() {
+        try {
+            const data = await fetchData('/api/info/gantt-chart');
+            if (!data || data.length === 0) {
+                console.warn('Нет данных для диаграммы Ганта');
+                return;
+            }
+
+            // Преобразование данных в формат, который понимает DHTMLX Gantt
+            const tasks = {
+                data: data.map(item => {
+                    const startDate = parseDate(item[2]);
+                    const endDate = parseDate(item[3]);
+
+                    // Если дата начала и окончания совпадают, то задача длится один день
+                    if (startDate.getTime() === endDate.getTime()) {
+                        endDate.setDate(endDate.getDate() + 1); // Добавляем один день
+                    }
+
+                    return {
+                        id: item[0], // Уникальный идентификатор задачи
+                        text: item[1], // Название задачи
+                        start_date: startDate.toISOString().split('T')[0], // Дата начала
+                        end_date: endDate.toISOString().split('T')[0], // Дата окончания
+                        progress: item[4] || 0, // Прогресс выполнения задачи (если есть)
+                        duration: item[5] || 1, // Продолжительность задачи (если есть)
+                        parent: item[6] || 0 // Родительская задача (если есть)
+                    };
+                })
+            };
+
+            // Инициализация Gantt
+            gantt.init("ganttChart");
+
+            // Настройка шкалы времени для отображения только тех дат, которые есть в данных
+            const minDate = new Date(Math.min(...tasks.data.map(task => new Date(task.start_date).getTime())));
+            const maxDate = new Date(Math.max(...tasks.data.map(task => new Date(task.end_date).getTime())));
+
+            gantt.config.scale_unit = "day";
+            gantt.config.date_scale = "%d %M";
+            gantt.config.min_column_width = 50;
+            gantt.config.start_date = minDate;
+            gantt.config.end_date = maxDate;
+
+            // Парсим задачи и отображаем диаграмму
+            gantt.parse(tasks);
+        } catch (error) {
+            console.error('Ошибка при обновлении диаграммы Ганта:', error);
+        }
+    }
+
+    // Инициализация данных и обновление графиков при загрузке страницы
+    document.addEventListener('DOMContentLoaded', async () => {
+        await updateLinearChart();
+        await updateSecondLinearChart();
+        await updateGraph();
+        await updateGanttChart();
+    });
+
+    // Переключение темы
+    const themeChangeBtn = document.getElementById("themeChangeBtn");
+    themeChangeBtn.addEventListener("click", () => {
+        document.body.classList.toggle("dark");
+        if (document.body.classList.contains("dark")) {
+            themeChangeBtn.innerHTML = '<i class="fa-solid fa-sun"></i>';
+        } else {
+            themeChangeBtn.innerHTML = '<i class="fa-solid fa-moon"></i>';
+        }
+    });
+
+
+    // Функция для парсинга дат из разных форматов
+    function parseDate(dateString) {
+        if (!dateString) return new Date(); // Если дата отсутствует, возвращаем текущую дату
+
+        // Попробуем разные форматы дат
+        const formats = [
+            "DD/MM/YYYY", "MM/DD/YYYY", "YYYY/MM/DD",
+            "DD-MM-YYYY", "MM-DD-YYYY", "YYYY-MM-DD",
+            "DD.MM.YYYY", "MM.DD.YYYY", "YYYY.MM.DD"
+        ];
+
+        for (const format of formats) {
+            const parts = format.split(/[\/\-\.]/);
+            const dateParts = dateString.split(/[\/\-\.]/);
+
+            if (dateParts.length === parts.length) {
+                const dateMap = {};
+                parts.forEach((part, index) => {
+                    dateMap[part] = dateParts[index];
+                });
+
+                const year = dateMap["YYYY"] || new Date().getFullYear();
+                const month = (dateMap["MM"] || dateMap["MM"]) - 1; // Месяцы в JS начинаются с 0
+                const day = dateMap["DD"] || 1;
+
+                const date = new Date(year, month, day);
+                if (!isNaN(date.getTime())) {
+                    return date;
+                }
+            }
+        }
+
+        // Если ни один формат не подошел, возвращаем текущую дату
+        return new Date();
+    }
+
+    // Функция для обновления линейной диаграммы
+    async function updateLinearChart() {
+        try {
+            const data = await fetchData('/api/info/linear-chart');
+            if (!data || data.length === 0) {
+                console.warn('Нет данных для линейной диаграммы');
+                return;
+            }
+
+            const labels = data.map(item => item[0] || ''); // Даты
+            const perDayData = data.map(item => parseFloat(item[1]) || 0); // Данные за день
+            const totalData = data.map(item => parseFloat(item[2]) || 0); // Данные с начала операции
+
+            linearChartData.labels = labels;
+            linearChartData.datasets[0].data = perDayData;
+            linearChartData.datasets[1].data = totalData;
+            linearChart.update();
+        } catch (error) {
+            console.error('Ошибка при обновлении линейной диаграммы:', error);
+        }
+    }
+
+    // Функция для обновления второй линейной диаграммы
+    async function updateSecondLinearChart() {
+        try {
+            const data = await fetchData('/api/info/second-linear-chart');
+            if (!data || data.length === 0) {
+                console.warn('Нет данных для второй линейной диаграммы');
+                return;
+            }
+
+            const labels = data.map(item => item[0] || ''); // Даты
+            const perDayData = data.map(item => parseFloat(item[1]) || 0); // Вал за день
+            const totalData = data.map(item => parseFloat(item[2]) || 0); // Вал с начала
+
+            secondLinearChartData.labels = labels;
+            secondLinearChartData.datasets[0].data = perDayData;
+            secondLinearChartData.datasets[1].data = totalData;
+            secondLinearChart.update();
+        } catch (error) {
+            console.error('Ошибка при обновлении второй линейной диаграммы:', error);
+        }
+    }
+    // Функция для обновления диаграммы Ганта
+    async function updateGanttChart() {
+        try {
+            const data = await fetchData('/api/info/gantt-chart');
+            if (!data || data.length === 0) {
+                console.warn('Нет данных для диаграммы Ганта');
+                return;
+            }
+
+            // Преобразование данных в формат, который понимает DHTMLX Gantt
+            const tasks = {
+                data: data.map(item => {
+                    const startDate = parseDate(item[2]);
+                    const endDate = parseDate(item[3]);
+
+                    // Если дата начала и окончания совпадают, то задача длится один день
+                    if (startDate.getTime() === endDate.getTime()) {
+                        endDate.setDate(endDate.getDate() + 1); // Добавляем один день
+                    }
+
+                    return {
+                        id: item[0], // Уникальный идентификатор задачи
+                        text: item[1], // Название задачи
+                        start_date: startDate.toISOString().split('T')[0], // Дата начала
+                        end_date: endDate.toISOString().split('T')[0], // Дата окончания
+                        progress: item[4] || 0, // Прогресс выполнения задачи (если есть)
+                        duration: item[5] || 1, // Продолжительность задачи (если есть)
+                        parent: item[6] || 0 // Родительская задача (если есть)
+                    };
+                })
+            };
+
+            // Инициализация Gantt
+            gantt.init("ganttChart");
+
+            // Настройка шкалы времени для отображения только тех дат, которые есть в данных
+            const minDate = new Date(Math.min(...tasks.data.map(task => new Date(task.start_date).getTime())));
+            const maxDate = new Date(Math.max(...tasks.data.map(task => new Date(task.end_date).getTime())));
+
+            gantt.config.scale_unit = "day";
+            gantt.config.date_scale = "%d %M";
+            gantt.config.min_column_width = 50;
+            gantt.config.start_date = minDate;
+            gantt.config.end_date = maxDate;
+
+            // Парсим задачи и отображаем диаграмму
+            gantt.parse(tasks);
+        } catch (error) {
+            console.error('Ошибка при обновлении диаграммы Ганта:', error);
+        }
+    }
+
+    // Инициализация данных и обновление графиков при загрузке страницы
+    document.addEventListener('DOMContentLoaded', async () => {
+        await updateLinearChart();
+        await updateSecondLinearChart();
+        await updateGraph();
+        await updateGanttChart();
+    });
+
+    // Переключение темы
+
+
+</script>
+
+
+</body>
+</html>

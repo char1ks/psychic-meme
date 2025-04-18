@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DDX with Bee</title>
+  <style>
+    /* Отключаем скролл */
+    html, body {
+      overflow: hidden;
+      margin: 0;
+      height: 100%;
+    }
+
+    /* Основные стили */
+    @import url("https://fonts.cdnfonts.com/css/devil-breeze");
+    @import url("https://fonts.cdnfonts.com/css/poppins");
+    @import url("https://fonts.cdnfonts.com/css/bimbo");
+
+    body {
+      font-family: "Montserrat", sans-serif;
+      background-color: #1b1b1b;
+      color: #eef8ce;
+      font-family: "Poppins", sans-serif;
+      font-size: 14px;
+      background-image: url(https://assets.codepen.io/453571/bg.avif),
+      repeating-linear-gradient(
+              to right,
+              transparent 0 500px,
+              #73814b33 500px 501px
+      );
+      background-size: 100%;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    *::-webkit scrollbar {
+      width: 0;
+    }
+
+    * {
+      padding: 0;
+      margin: 0;
+      list-style: none;
+      box-sizing: border-box;
+    }
+
+    .section {
+      width: 100%;
+      min-height: 100vh;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .content-fit {
+      width: min(1200px, 90vw);
+      margin: auto;
+      min-height: 100vh;
+      position: relative;
+      padding-block: 10em;
+    }
+
+    header {
+      padding-block: 1em;
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 10px;
+      backdrop-filter: blur(20px);
+      z-index: 100;
+      background-color: #1b1b1b11;
+      background-image: repeating-linear-gradient(
+              to right,
+              transparent 0 500px,
+              #eee1 500px 501px
+      );
+    }
+
+    header .content-fit {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      min-height: unset !important;
+      padding-block: unset !important;
+    }
+
+    header .content-fit nav ul {
+      display: flex;
+      gap: 2em;
+    }
+
+    #banner .title {
+      color: #d1ff48;
+      font-size: 11em;
+      font-family: "devil breeze";
+      font-weight: bold;
+      position: relative;
+      overflow: visible;
+      text-align: center;
+    }
+
+    #banner .title::before {
+      content: attr(data-before);
+      position: absolute;
+      z-index: -1;
+      color: oklch(0.78 0.17 80.01 / 0.19);
+      mask: linear-gradient(
+              to bottom,
+              #000 -80%,
+              oklch(0 0 0/0),
+              #000,
+              oklch(0 0 0/0) 200%
+      );
+      transform: scaleY(-1) translateY(-0.44lh);
+    }
+
+    .section .decorate {
+      position: fixed;
+      z-index: -100;
+      pointer-events: none;
+    }
+
+    #intro .content-fit {
+      display: flex;
+      gap: 30%;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .section .number {
+      font-family: "devil breeze";
+      font-size: 15em;
+      font-weight: bold;
+    }
+
+    .section .content-fit .title {
+      font-family: "devil breeze";
+      font-size: 5em;
+      font-weight: bold;
+    }
+
+    #description .content-fit {
+      padding-right: 30%;
+    }
+
+    #description .number {
+      font-size: 5em;
+    }
+
+    #description .title {
+      font-size: 7em;
+      font-weight: 500;
+    }
+
+    #contact .content-fit {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      text-align: center;
+    }
+
+    #contact table {
+      width: min(800px, 90vw);
+      padding-top: 2em;
+      font-size: 2em;
+      margin: auto;
+    }
+
+    #contact table td {
+      padding-block: 0.5em;
+      border-bottom: 1px dashed #445022;
+    }
+
+    #contact table td:nth-child(1) {
+      text-align: left;
+      font-weight: 500;
+    }
+
+    #contact table td:nth-child(2) {
+      text-align: right;
+      font-weight: 200;
+    }
+
+    #contact .sign {
+      font-size: 10em;
+    }
+
+    #container3D {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    /* Стили для пчелки */
+    .bee-container {
+      position: fixed;
+      width: 50px;
+      height: 50px;
+      z-index: 1000;
+    }
+
+    .bee {
+      width: 100%;
+      height: 100%;
+      animation: wing-anim 150ms linear infinite;
+    }
+
+    .bee.flipped {
+      transform: scaleX(-1);
+    }
+
+    @keyframes wing-anim {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(10deg); }
+    }
+
+    /* Стили для текста "АГРО Hack" */
+    .agro-hack {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      margin-left: 800px; /* Перемещение правее */
+      margin-top: 300px;  /* Перемещение ниже */
+    }
+    .agro-hack-left {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      margin-left: 20px; /* Перемещение правее */
+      margin-top: 20px;  /* Перемещение ниже */
+    }
+    .agro {
+      font-family: "Montserrat", sans-serif;
+      font-size: 8em;
+      color: #d1ff48;
+      animation: neon-glow 1.5s infinite alternate;
+    }
+    .hack {
+      font-family: "Bebas Neue", sans-serif;
+      font-size: 5em; /* Уменьшил размер шрифта для Hack */
+      color: #b9dd4e;
+    }
+    .agro-left {
+      font-family: "Montserrat", sans-serif;
+      font-size: 8em;
+      color: #d1ff48;
+      animation: neon-glow 1.5s infinite alternate;
+    }
+    .hack {
+      font-family: "Bebas Neue", sans-serif;
+      font-size: 5em; /* Уменьшил размер шрифта для Hack */
+      color: #b9dd4e;
+    }
+    @keyframes neon-glow {
+      0% {
+        text-shadow: 0 0 5px #d1ff48, 0 0 10px #d1ff48, 0 0 20px #d1ff48, 0 0 40px #d1ff48;
+      }
+      100% {
+        text-shadow: 0 0 10px #d1ff48, 0 0 20px #d1ff48, 0 0 40px #d1ff48, 0 0 80px #d1ff48;
+      }
+    }
+    .login-container {
+      background-color: rgba(27, 27, 27, 0.8); /* Полупрозрачный болотный фон */
+      border-radius: 10px;
+      padding: 30px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      width: 400px;
+      text-align: center;
+      position: absolute; /* Абсолютное позиционирование */
+      top: 50%; /* Смещение на 50% сверху */
+      left: 50%; /* Смещение на 50% слева */
+      transform: translate(-50%, -50%); /* Центрирование */
+      z-index: 1000; /* Убедитесь, что контейнер поверх других элементов */
+    }
+
+    .login-container h2 {
+      margin-bottom: 20px;
+      color: #d1ff48; /* Цвет заголовка */
+    }
+    .login-container input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #d1ff48; /* Цвет границы */
+      border-radius: 5px;
+      background-color: rgba(255, 255, 255, 0.1); /* Полупрозрачный фон для полей */
+      color: #eef8ce; /* Цвет текста */
+    }
+    .login-container button {
+      width: 100%;
+      padding: 10px;
+      background-color: #d1ff48; /* Цвет кнопки */
+      border: none;
+      border-radius: 5px;
+      color: #1b1b1b; /* Цвет текста кнопки */
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .login-container button:hover {
+      background-color: #b9dd4e; /* Цвет кнопки при наведении */
+    }
+    .login-container .error {
+      color: red; /* Цвет ошибки */
+      margin-top: 10px;
+    }
+    .agro-hack.top-left {
+      position: fixed; /* Фиксированное позиционирование */
+      top: 20px; /* Отступ сверху */
+      left: 20px; /* Отступ слева */
+      z-index: 1000; /* Убедитесь, что надпись поверх других элементов */
+    }
+    .year-2025 {
+      position: fixed; /* Фиксированное позиционирование */
+      top: 70px; /* Отступ сверху */
+      left: 70px; /* Отступ слева */
+      z-index: 1000; /* Убедитесь, что надпись поверх других элементов */
+      font-family: "Bebas Neue", sans-serif;
+      font-size: 9em; /* Размер шрифта */
+      color: #b1d44d; /* Зеленый цвет */
+      animation: neon-flicker 1.5s infinite alternate; /* Анимация мерцания */
+    }
+    .login-container a {
+      color: #d1ff48; /* Зеленый цвет */
+      text-decoration: none; /* Убрать подчеркивание */
+      transition: color 0.3s; /* Плавное изменение цвета при наведении */
+    }
+
+    .login-container a:hover {
+      color: #b9dd4e; /* Цвет при наведении */
+    }
+
+    @keyframes neon-flicker {
+      0% {
+        text-shadow: 0 0 5px #b1d44d, 0 0 10px #b1d44d, 0 0 20px #b1d44d, 0 0 40px #b1d44d;
+      }
+      50% {
+        text-shadow: 0 0 10px #b1d44d, 0 0 20px #b1d44d, 0 0 40px #b1d44d, 0 0 80px #b1d44d;
+      }
+      100% {
+        text-shadow: 0 0 5px #b1d44d, 0 0 10px #b1d44d, 0 0 20px #b1d44d, 0 0 40px #b1d44d;
+      }
+    }
+
+
+  </style>
+  <!-- Подключение шрифта Bebas Neue -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="login-container">
+  <h2>Вход</h2>
+  <form action="/process_login" method="post">
+    <input type="text" name="username" placeholder="Имя пользователя" required>
+    <input type="password" name="password" placeholder="Пароль" required>
+    <button type="submit">Войти</button>
+  </form>
+  <div class="error" th:if="${param.error}">
+    Неверные имя пользователя или пароль!
+  </div>
+  <!-- Гиперссылка на регистрацию -->
+  <p style="margin-top: 10px;">
+    Нет аккаунта? <a href="/tg_user/register" style="color: #d1ff48; text-decoration: none;">Зарегистрируйтесь</a>
+  </p>
+</div>
+
+<div class="year-2025">2025</div>
+<div class="section" id="banner">
+  <div class="content-fit">
+    <div class="agro-hack">
+      <div class="agro">АГРО</div>
+      <div class="hack">Hack</div>
+    </div>
+
+  </div>
+  <img src="https://assets.codepen.io/453571/flower.png" class="decorate" alt="" style="width: 50vw; bottom: 0; right: 0;">
+  <img src="https://assets.codepen.io/453571/leaf.png" class="decorate" alt="" style="width: 30vw; bottom: 0; left: 0;">
+</div>
+<div id="container3D"></div>
+
+
+
+<script>
+  // Создаем массив для хранения данных о пчелках
+  const bees = [];
+
+  // Функция для создания пчелки
+  function createBee() {
+    const beeContainer = document.createElement('div');
+    beeContainer.className = 'bee-container';
+    beeContainer.innerHTML = `
+    <svg class="bee" viewBox="0 0 32 32" role="img" aria-labelledby="bee_title">
+      <title id="bee_title">
+        A comic-style vector art of a bee. The bee has the shape of a
+        rounded rectangle. It has bent antennas. The wings are
+        flattering.
+      </title>
+      <g class="bee" stroke="#000" stroke-linecap="round" stroke-width=".5">
+        <path fill="#ff3" d="M1 17 q0 -8 8 -8 l 12 0 q 8 0 8 8 q 0 8 -8 8 l -12 0 q -8 0 -8 -8Z" />
+        <path fill="#222" d="M9 9 q -8 0 -8 8 q 0 8 8 8 l 3 0 q -8 0 -8 -8 q 0 -8 8 -8Z" />
+        <path fill="#222" d="M14 9 q -8 0 -8 8 q 0 8 8 8 l 3 0 q -8 0 -8 -8 q 0 -8 8 -8Z" />
+        <path fill="#222" d="M19 9 q -8 0 -8 8 q 0 8 8 8 l 3 0 q -8 0 -8 -8 q 0 -8 8 -8Z" />
+        <path fill="#000" fill-opacity=".2" stroke="none"
+              d="M1 17 q0 8 8 8 l 12 0 q 8 0 8 -8 q 0 6 -6 6 l-16 0 q -6 0 -6 -6Z" />
+        <ellipse cx="25" cy="13" rx=".6" ry=".9" fill="#000" />
+        <ellipse cx="22" cy="13" rx=".6" ry=".9" fill="#000" />
+        <path fill="none" d="M21.5 16 q0 1.5 2 1.5 q 2 0 2 -1.5" />
+        <path class="leg-1" fill="none" d="M14 25 q2 0 2 4" />
+        <path class="leg-2" fill="none" d="M14 25 q1 0 1 4" />
+        <path class="leg-3" fill="none" d="M14 25 q-1 0 -1 4" />
+        <path class="leg-4" fill="none" d="M14 25 q-2 0 -2 4" />
+        <path class="antenna-1" fill="none" d="M24.5 9.5 q0 -6 4 -6" />
+        <path class="antenna-2" fill="none" d="M26 10 q0 -5 5 -4" />
+        <path class="wing-1" fill="#fff" fill-opacity=".5" stroke="#000"
+              d="M17 9 q -5 0 -6 -6 q 5 0 6 6Z"/>
+        <path class="wing-2" fill="#fff" fill-opacity=".5" stroke="#000"
+              d="M17 9 q 0 -5 6 -6 q 0 5 -6 6Z"/>
+      </g>
+    </svg>
+  `;
+    document.body.appendChild(beeContainer);
+
+    const bee = beeContainer.querySelector('.bee');
+    const posX = Math.random() * window.innerWidth;
+    const posY = Math.random() * window.innerHeight;
+    const speedX = (Math.random() - 0.5) * 4;
+    const speedY = (Math.random() - 0.5) * 4;
+
+    bees.push({ beeContainer, bee, posX, posY, speedX, speedY });
+  }
+
+  // Функция для движения пчелки
+  function moveBee(beeData) {
+    beeData.posX += beeData.speedX;
+    beeData.posY += beeData.speedY;
+
+    // Отражение при касании краев
+    if (beeData.posX <= 0 || beeData.posX >= window.innerWidth - beeData.beeContainer.offsetWidth) {
+      beeData.speedX *= -1;
+
+      // Поворот пчелки
+      if (beeData.posX <= 0) {
+        // Касание левого края — поворот направо
+        beeData.bee.classList.remove('flipped');
+      } else {
+        // Касание правого края — поворот налево
+        beeData.bee.classList.add('flipped');
+      }
+    }
+
+    if (beeData.posY <= 0 || beeData.posY >= window.innerHeight - beeData.beeContainer.offsetHeight) {
+      beeData.speedY *= -1;
+    }
+
+    beeData.beeContainer.style.left = `${beeData.posX}px`;
+    beeData.beeContainer.style.top = `${beeData.posY}px`;
+  }
+
+  // Создаем несколько пчелок
+  for (let i = 0; i < 5; i++) { // Количество пчелок
+    createBee();
+  }
+
+  // Анимация для всех пчелок
+  function animateBees() {
+    bees.forEach(moveBee);
+    requestAnimationFrame(animateBees);
+  }
+
+  animateBees();
+
+</script>
+</body>
+</html>

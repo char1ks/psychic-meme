@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Telegram Messenger</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
+  <style>
+    /* Основные стили */
+    :root {
+      --bg-black100: #353535;
+      --bg-black50: #eef0f4;
+      --bg-black20: #414546;
+      --important-message: #1e90ff; /* Цвет для важных сообщений */
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: var(--bg-black50);
+      font-family: sans-serif;
+    }
+
+    body.dark {
+      --bg-black100: #fff;
+      --bg-black50: #000;
+      --bg-black20: #eef0f4;
+    }
+
+    /* Стили для меню */
+    .menu {
+      position: absolute;
+      width: 60px;
+      height: 600px;
+      background-color: var(--bg-black50);
+      z-index: 2;
+      top: 0;
+      bottom: 0;
+      left: 10px;
+      margin: auto;
+      border-radius: .8rem;
+      transition: .3s ease .15s;
+    }
+
+    .menu.open { width: 240px; }
+
+    .menu a { text-decoration: none; }
+
+    .menu .actionBar {
+      width: 100%;
+      height: 10%;
+      padding: 0.5rem;
+      overflow: hidden;
+    }
+
+    .menu .actionBar div {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      border-radius: .5rem;
+      transition: .3s ease;
+    }
+
+    .menu .actionBar div button {
+      background-color: transparent;
+      outline: none;
+      border: none;
+      border-radius: .5rem;
+      color: var(--bg-black100);
+      width: 45px;
+      height: 45px;
+      transition: .3s ease;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .menu .actionBar div button:hover { background-color: rgb(132, 0, 255); }
+
+    .menu .actionBar div h3 { width: calc(100% - 45px); text-align: center; }
+
+    .menu .optionsBar {
+      overflow: hidden;
+      display: flex;
+      width: 100%;
+      height: 60%;
+      padding: 0 .5rem;
+      align-items: center;
+      flex-direction: column;
+    }
+
+    .menu .optionsBar .menuItem {
+      width: 100%;
+      height: 45px;
+      margin: 0.3rem;
+    }
+
+    .menu .optionsBar .menuItem .menuOption {
+      font-size: 1rem;
+      outline: none;
+      border: none;
+      background-color: transparent;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      border-radius: .5rem;
+      transition: .3s ease;
+      cursor: pointer;
+    }
+
+    .menu .optionsBar .menuItem .menuOption:hover { background-color: rgb(132, 0, 255); }
+
+    .menu .optionsBar .menuItem .menuOption i { width: 45px; text-align: center; color: var(--bg-black100); }
+
+    .menu .optionsBar .menuItem .menuOption h5 { width: calc(100% - 45px); }
+
+    .menuText {
+      color: var(--bg-black20);
+      transform: translateX(-250px);
+      opacity: 0;
+      transition: transform .3s ease .1s;
+    }
+
+    .menuText.open2 {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .menu .menuBreak {
+      width: 100%;
+      height: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .menu .menuBreak hr {
+      width: 50%;
+      height: 3px;
+      background-color: var(--bg-black100);
+      border: none;
+      border-radius: 5px;
+    }
+
+    .menu .menuUser {
+      width: 100%;
+      height: 10px;
+      padding: 4.5rem 0 3rem 0;
+    }
+
+    .menu .menuUser a {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      text-decoration: none;
+      padding: 0.5rem;
+      position: relative;
+    }
+
+    .menu .menuUser a div {
+      width: 45px;
+      height: 45px;
+      position: relative;
+      border-radius: 50%;
+      overflow: hidden;
+    }
+
+    .menu .menuUser a div img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+
+    .menu .menuUser a .username { width: calc(70% - 45px); }
+
+    .menu .menuUser a p { width: calc(30% - 45px); }
+
+    .menu .menuUser a:hover p { animation: animArrow .3s ease 2; }
+
+    @keyframes animArrow {
+      0% { transform: translateX(0); }
+      50% { transform: translateX(5px); }
+      100% { transform: translateX(0); }
+    }
+
+    .menu .menuUser .userInfo {
+      position: absolute;
+      width: 10rem;
+      height: 8rem;
+      opacity: 0;
+      color: var(--bg-black50);
+      pointer-events: none;
+      top: 58%;
+      left: 1.5rem;
+      transition: .3s ease;
+      transform: scale(0);
+      transform-origin: bottom left;
+    }
+
+    .menu .menuUser .userInfo div {
+      position: relative;
+      width: 100%;
+      height: calc(100% - 20px);
+      box-shadow: 0px 0px 40px rgba(0, 0, 0, .3);
+      background-color: var(--bg-black100);
+      border-top-left-radius: 1rem;
+      border-top-right-radius: 1rem;
+      border-bottom-right-radius: 1rem;
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      flex-direction: column;
+    }
+
+    .menu .menuUser .userInfo div h1 { font-size: 4rem; }
+
+    .menu .menuUser .userInfo div::before {
+      content: '';
+      position: absolute;
+      bottom: -18px;
+      left: -2px;
+      width: 0;
+      height: 0;
+      border-top: 15px solid transparent;
+      border-bottom: 15px solid transparent;
+      border-right: 15px solid var(--bg-black100);
+      transform: rotate(45deg);
+    }
+
+    .menu .menuUser:hover .userInfo {
+      pointer-events: all;
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .menu .themeBar {
+      overflow: hidden;
+      width: 100%;
+      height: 10%;
+      padding: .5rem;
+    }
+
+    .menu .themeBar div {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      border-radius: .5rem;
+      transition: .3s ease;
+    }
+
+    .menu .themeBar div button {
+      background-color: transparent;
+      outline: none;
+      border: none;
+      border-radius: .5rem;
+      color: var(--bg-black100);
+      width: 100%;
+      height: 45px;
+      transition: .3s ease;
+      font-size: 1rem;
+    }
+
+    .menu .themeBar div button:hover { background-color: rgb(132, 0, 255); }
+
+    .menu .optionsBar .menuItem .menuOption:hover .menuText,
+    .menu .optionsBar .menuItem .menuOption:hover i,
+    .menu .actionBar div button:hover i,
+    .menu .themeBar div button:hover i { color: #ffffff; }
+
+    /* Стили для чата */
+    .chat-container {
+      margin-left: 260px;
+      padding: 20px;
+      width: 80%; /* Контейнер занимает 80% ширины экрана */
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      display: flex;
+      height: 80vh;
+      overflow: hidden;
+    }
+
+    .chat-list {
+      width: 250px; /* Ширина списка чатов */
+      overflow-y: auto;
+      background-color: #f9f9f9;
+      border-radius: 10px;
+      padding: 10px;
+      margin-right: 20px; /* Отступ между списком чатов и окном сообщений */
+    }
+
+    .chat-list h3 {
+      margin: 0 0 10px 0;
+      font-size: 1.2rem;
+      color: #333;
+    }
+
+    .chat-list ul {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    .chat-list li {
+      padding: 10px;
+      cursor: pointer;
+      border-bottom: 1px solid #ccc;
+      border-radius: 5px;
+      transition: background-color 0.3s;
+    }
+
+    .chat-list li:hover {
+      background-color: #f0f0f0;
+    }
+
+    .chat-window {
+      flex-grow: 1;
+      overflow-y: auto;
+      background-color: #fff;
+      border-radius: 10px;
+      padding: 20px;
+    }
+
+    .chat-window h3 {
+      margin: 0 0 10px 0;
+      font-size: 1.2rem;
+      color: #333;
+    }
+
+    .message {
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 8px;
+      background-color: #f1f1f1;
+      position: relative;
+      max-width: 70%;
+      transition: filter 0.3s ease; /* Плавный переход для блюра */
+    }
+
+    .message.important {
+      background-color: var(--important-message); /* Цвет для важных сообщений */
+      color: white;
+    }
+
+    .message.selected {
+      filter: blur(2px); /* Применяем блюр к выделенным сообщениям */
+    }
+
+    .message .sender {
+      font-weight: bold;
+      color: inherit;
+    }
+
+    .message .text {
+      margin-left: 10px;
+      color: inherit;
+    }
+
+    .message .time {
+      font-size: 0.8em;
+      color: inherit;
+      position: absolute;
+      bottom: 5px;
+      right: 10px;
+    }
+
+    .message img {
+      max-width: 100%;
+      border-radius: 8px;
+    }
+
+    .message.incoming {
+      background-color: #e1f5fe;
+      align-self: flex-start;
+    }
+
+    .message.outgoing {
+      background-color: #dcedc8;
+      align-self: flex-end;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .message {
+      animation: fadeIn 0.3s ease;
+    }
+
+    /* Анимация перед выбором чата */
+    .chat-placeholder {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+      font-size: 1.5rem;
+      color: #888;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.5; }
+      50% { opacity: 1; }
+      100% { opacity: 0.5; }
+    }
+
+    /* Прогресс анимации */
+    .progress {
+      position: absolute;
+      width: 100%;
+      height: 5px;
+      background-color: rgba(0, 0, 0, 0.1);
+      border-radius: 5px;
+      top: 0;
+      left: 0;
+      z-index: 1;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background-color: #1e90ff; /* Цвет заполненной части прогресса */
+      border-radius: 5px;
+      width: 0;
+      transition: width 0.1s ease;
+    }
+
+    /* Стили для счетчика выделенных сообщений */
+    .selected-count {
+      position: absolute;
+      top: 20px;
+      right: 50px; /* Отступ справа */
+      background-color: rgba(255, 255, 255, 0.8);
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 10px 15px;
+      display: none;
+      z-index: 10;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      font-size: 14px;
+      color: #333;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .selected-count #count {
+      font-weight: bold;
+    }
+
+    .selected-count #cancelBtn {
+      background-color: transparent;
+      border: none;
+      color: #333;
+      cursor: pointer;
+      padding: 5px 10px;
+      border-radius: 3px;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .selected-count #cancelBtn:hover {
+      background-color: #f0f0f0;
+    }
+
+    /* Эффект "лампочки" для кнопки "Отмена" */
+    @keyframes bulbEffect {
+      0% { background-color: #ffffff; }
+      50% { background-color: #cccccc; }
+      100% { background-color: #ffffff; }
+    }
+
+    .selected-count #cancelBtn {
+      animation: bulbEffect 2s infinite;
+    }
+    /* Стили для кнопки экспорта */
+    .export-button {
+      background-color: transparent;
+      border: none;
+      color: #333;
+      cursor: pointer;
+      padding: 5px 10px;
+      border-radius: 3px;
+      transition: background-color 0.3s ease, color 0.3s ease;
+      margin-right: 10px; /* Отступ справа */
+    }
+
+    .export-button:hover {
+      background-color: #f0f0f0;
+    }
+.chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.date-select-button {
+  background-color: #1e90ff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.date-select-button:hover {
+  background-color: #0077cc;
+}
+
+  </style>
+</head>
+<body>
+<nav id="menu" class="menu">
+  <div class="actionBar">
+    <div>
+      <button id="menuBtn">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+      <h3 class="menuText">Меню</h3>
+    </div>
+  </div>
+  <ul class="optionsBar">
+    <li class="menuItem">
+      <a href="#" class="menuOption">
+        <i class="fa-solid fa-house"></i><h5 class="menuText">Телеграм</h5>
+      </a>
+    </li>
+    <li class="menuBreak">
+      <hr>
+    </li>
+    <li class="menuItem">
+      <a th:href="@{/analytics}" class="menuOption">
+        <i class="fa-solid fa-shopping-bag"></i>
+        <h5 class="menuText">Аналитика</h5>
+      </a>
+    </li>
+    <li class="menuItem">
+      <button id="constantManagerBtn" class="menuOption">
+        <a th:href="@{/smoke}">
+          <i class="fa-solid fa-border-all"></i>
+          <h5 class="menuText">Нод-система</h5>
+        </a>
+      </button>
+    </li>
+    <div class="menuUser">
+      <a href="#">
+        <div>
+          <img src="https://images.mein-mmo.de/medien/2025/04/Schedule-1-Cheats-Konsole-Titelbild.jpg" alt="image">
+        </div>
+        <h5 class="username menuText">Alex</h5>
+        <p class="menuText"><i class="fa-solid fa-chevron-right"></i></p>
+      </a>
+      <div class="userInfo">
+        <div>
+          <h1><i class="fa-solid fa-exclamation-circle"></i></h1>
+          <p>User Info</p>
+        </div>
+      </div>
+    </div>
+    <div class="themeBar">
+      <div>
+        <button id="themeChangeBtn"><i class="fa-solid "></i></button>
+      </div>
+    </div>
+  </ul>
+</nav>
+
+<div class="chat-container">
+  <div class="chat-list" id="chatList">
+    <h3>Ваши чаты</h3>
+    <ul>
+      <!-- Чаты будут загружены сюда -->
+    </ul>
+  </div>
+  <div class="chat-window" id="chatWindow">
+    <div class="chat-header">
+      <h3 id="chatTitle">Сообщения</h3>
+      <button id="selectByDateBtn" class="date-select-button">Выбрать по дате</button>
+    </div>
+    <div id="messages">
+      <div class="chat-placeholder">Выберите чат, чтобы начать</div>
+    </div>
+  </div>
+</div>
+
+<div class="selected-count" id="selectedCount">
+  <button id="exportBtn" class="export-button">Экспорт</button>
+  Выделено: <span id="count">0</span> сообщений
+  <button id="cancelBtn">Отмена</button>
+</div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+<script>
+  const menuBtn = document.getElementById('menuBtn');
+  const menu = document.getElementById('menu');
+  const menuText = document.querySelectorAll('.menuText');
+  const selectedCountElement = document.getElementById('selectedCount');
+  const countElement = document.getElementById('count');
+  const messagesDiv = document.getElementById('messages');
+  const cancelBtn = document.getElementById('cancelBtn');
+  let selectedMessages = new Map(); // Для хранения выделенных сообщений (id -> boolean)
+  let timer; // Таймер для долгого нажатия
+  let progressFill;
+  let isLongPress = false;
+
+ async function exportMessages() {
+    const selectedMessagesArray = Array.from(selectedMessages.entries())
+            .filter(([_, isSelected]) => isSelected)
+            .map(([id]) => {
+                const messageElement = document.querySelector(`.message[data-id="${id}"]`);
+                return {
+                    sender: messageElement.querySelector('.sender').textContent,
+                    text: messageElement.querySelector('.text').textContent,
+                    time: messageElement.querySelector('.time').textContent,
+                };
+            });
+    if (selectedMessagesArray.length === 0) {
+        alert('Нет выделенных сообщений для экспорта.');
+        return;
+    }
+    try {
+        const response = await fetch('/api/messages/llm_merge', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(selectedMessagesArray),
+        });
+        if (!response.ok) {
+            throw new Error('Ошибка при экспорте сообщений');
+        }
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+
+        // Формируем имя файла с текущей датой в формате ГГГГ-дд-ММ
+        const now = new Date();
+        const year = now.getFullYear(); // Год (ГГГГ)
+        const month = String(now.getMonth() + 1).padStart(2, '0'); // Месяц (ММ)
+        const day = String(now.getDate()).padStart(2, '0'); // День (дд)
+
+        // Формируем строку даты в формате ГГГГ-дд-ММ
+        const formattedDate = `${year}-${day}-${month}`;
+
+        // Формируем имя файла
+        const fileName = `Опять_уронили_${formattedDate}.xlsx`;
+
+
+        // Устанавливаем имя файла
+        a.download = fileName;
+
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error('Ошибка при экспорте сообщений:', error);
+        alert('Не удалось экспортировать сообщения.');
+    }
+}
+
+
+  // Добавляем обработчик события для кнопки экспорта
+  const exportBtn = document.getElementById('exportBtn');
+  exportBtn.addEventListener('click', exportMessages);
+
+  // Открытие/закрытие меню
+  menuBtn.addEventListener('click', () => {
+    menu.classList.toggle('open');
+    menuText.forEach(function (text, index) {
+      setTimeout(() => {
+        text.classList.toggle('open2');
+      }, index * 50);
+    });
+  });
+
+  // Закрытие меню при клике вне его области
+  $(document).on('click', function (e) {
+    if ($(e.target).closest('#menu').length === 0) {
+      menu.classList.toggle('open');
+      menuText.forEach(function (text, index) {
+        setTimeout(() => {
+          text.classList.toggle('open2');
+        }, index * 50);
+      });
+    }
+  });
+
+  // Переключение темы
+  const dayNight = document.querySelector('#themeChangeBtn');
+  dayNight.addEventListener('click', () => {
+    document.body.classList.toggle('dark');
+    if (document.body.classList.contains('dark')) {
+      localStorage.setItem('theme', 'dark');
+    } else {
+      localStorage.setItem('theme', 'light');
+    }
+    updateIcon();
+  });
+
+  // Установка темы при загрузке страницы
+  function themeMode() {
+    if (localStorage.getItem('theme') !== null) {
+      if (localStorage.getItem('theme') === 'light') {
+        document.body.classList.remove('dark');
+      } else {
+        document.body.classList.add('dark');
+      }
+    }
+    updateIcon();
+  }
+  themeMode();
+
+  // Обновление иконки темы
+  function updateIcon() {
+    if (document.body.classList.contains('dark')) {
+      dayNight.querySelector('i').classList.remove('fa-moon');
+      dayNight.querySelector('i').classList.add('fa-sun');
+    } else {
+      dayNight.querySelector('i').classList.remove('fa-sun');
+      dayNight.querySelector('i').classList.add('fa-moon');
+    }
+  }
+
+  // Функция для получения всех сообщений из Redis через API
+  async function fetchMessages() {
+    try {
+      const response = await fetch('/api/messages'); // Обращаемся к вашему API
+      if (!response.ok) {
+        throw new Error('Ошибка при загрузке сообщений');
+      }
+      const messages = await response.json();
+      displayMessages(messages);
+    } catch (error) {
+      console.error('Ошибка при получении сообщений:', error);
+    }
+  }
+
+  // Функция для отображения сообщений
+ function displayMessages(messages) {
+  messagesDiv.innerHTML = ''; // Очищаем предыдущие сообщения
+
+  messages.sort((a, b) => {
+    const dateA = new Date(JSON.parse(a).time);
+    const dateB = new Date(JSON.parse(b).time);
+    return dateA - dateB;
+  });
+
+  messages.forEach((message, index) => {
+    const messageData = JSON.parse(message);
+    const messageClass = messageData.sender === 'Вы' ? 'outgoing' : 'incoming';
+    const messageElement = `
+      <div class="message ${messageClass} ${messageData.important ? 'important' : ''}" data-id="${index}">
+        <div class="sender">${messageData.sender}</div>
+        <div class="text">${messageData.text}</div>
+        <div class="time">${messageData.time}</div>
+        ${messageData.image ? `<img src="data:image/jpeg;base64,${messageData.image}" alt="image" />` : ''}
+      </div>`;
+    messagesDiv.innerHTML += messageElement;
+  });
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+  const messageElements = document.querySelectorAll('.message');
+  messageElements.forEach(messageElement => {
+    messageElement.addEventListener('mousedown', handleMouseDown);
+    messageElement.addEventListener('mouseup', handleMouseUp);
+    messageElement.addEventListener('mouseleave', handleMouseLeave);
+  });
+}
+
+
+  // Обработка долгого нажатия на сообщение
+  function handleMouseDown(event) {
+    const messageElement = event.currentTarget;
+    // Создаем элемент прогресса
+    progressFill = document.createElement('div');
+    progressFill.classList.add('progress');
+    const fill = document.createElement('div');
+    fill.classList.add('progress-fill');
+    progressFill.appendChild(fill);
+    messageElement.appendChild(progressFill);
+    timer = setTimeout(() => {
+      isLongPress = true;
+      toggleMessageSelection(messageElement);
+      fill.style.width = '100%'; // Заполняем прогресс
+    }, 500); // 500 мс для долгого нажатия
+
+    // Анимация прогресса
+    let width = 0;
+    const interval = setInterval(() => {
+      if (isLongPress) {
+        width += 5; // Увеличиваем ширину прогресса
+        fill.style.width = width + '%';
+        if (width >= 100) {
+          clearInterval(interval);
+        }
+      }
+    }, 100);
+  }
+
+  // Обработка отпускания кнопки мыши
+  function handleMouseUp(event) {
+    clearTimeout(timer);
+    if (!isLongPress) {
+      // Если не было долгого нажатия, можно добавить другое поведение
+    }
+    if (progressFill) {
+      progressFill.remove(); // Удаляем элемент прогресса
+    }
+    isLongPress = false;
+  }
+
+  // Обработка выхода курсор за пределы сообщения
+  function handleMouseLeave(event) {
+    clearTimeout(timer);
+    if (progressFill) {
+      progressFill.remove(); // Удаляем элемент прогресса
+    }
+    isLongPress = false;
+  }
+
+  // Переключение выделения сообщения
+  function toggleMessageSelection(messageElement) {
+    const messageId = messageElement.dataset.id;
+    const isSelected = selectedMessages.get(messageId) || false;
+    selectedMessages.set(messageId, !isSelected); // Инвертируем состояние
+    messageElement.classList.toggle('selected', !isSelected); // Обновляем класс
+    updateSelectedCount();
+  }
+
+  // Обновление счетчика выделенных сообщений
+  function updateSelectedCount() {
+    const selectedCount = Array.from(selectedMessages.values()).filter(Boolean).length;
+    countElement.innerText = selectedCount;
+    selectedCountElement.style.display = selectedCount > 0 ? 'block' : 'none';
+  }
+
+  // Отмена выделения всех сообщений
+  cancelBtn.addEventListener('click', () => {
+    selectedMessages.clear();
+    updateSelectedCount();
+    document.querySelectorAll('.message.selected').forEach(message => {
+      message.classList.remove('selected');
+    });
+  });
+
+  // Функция для загрузки списка чатов
+  async function loadChats() {
+    try {
+      const response = await fetch('/chat/api/all'); // Обращаемся к вашему API
+      if (!response.ok) {
+        throw new Error('Ошибка при загрузке чатов');
+      }
+      const chats = await response.json();
+      displayChats(chats);
+    } catch (error) {
+      console.error('Ошибка при получении чатов:', error);
+    }
+  }
+
+  // Функция для отображения списка чатов
+  function displayChats(chats) {
+    const chatList = document.getElementById('chatList').querySelector('ul');
+    chatList.innerHTML = ''; // Очищаем предыдущие чаты
+    chats.forEach(chat => {
+      const chatElement = document.createElement('li');
+      chatElement.textContent = chat.title;
+      chatElement.addEventListener('click', () => openChat(chat.title));
+      chatList.appendChild(chatElement);
+    });
+  }
+
+  // Функция для открытия чата
+  function openChat(chatName) {
+    document.getElementById('chatTitle').innerText = chatName;
+    const chatPlaceholder = document.querySelector('.chat-placeholder');
+    if (chatPlaceholder) {
+      chatPlaceholder.remove(); // Убираем анимацию выбора чата
+    }
+    fetchMessages(); // Загружаем сообщения для выбранного чата
+  }
+
+  // Подключение к WebSocket для получения новых сообщений из Kafka
+  const socket = new SockJS('/ws');
+  const stompClient = Stomp.over(socket);
+
+  stompClient.connect({}, function (frame) {
+    console.log('Connected: ' + frame);
+
+    stompClient.subscribe('/topic/messages', function (message) {
+      try {
+        // Очищаем JSON-строку от недопустимых символов
+        const cleanedMessageBody = message.body.replace(/[\x00-\x1F\x7F]/g, '');
+
+        // Парсим очищенное сообщение из JSON
+        const messageData = JSON.parse(cleanedMessageBody);
+
+        // Определяем класс сообщения в зависимости от отправителя
+        const messageClass = messageData.sender === 'Вы' ? 'outgoing' : 'incoming';
+
+        // Создаем HTML-элемент для сообщения
+        const messageElement = `
+                <div class="message ${messageClass} ${messageData.important ? 'important' : ''}">
+                    <div class="sender">${messageData.sender}</div>
+                    <div class="text">${messageData.text}</div>
+                    <div class="time">${messageData.time}</div>
+                    ${messageData.image ? `<img src="data:image/jpeg;base64,${messageData.image}" alt="image" />` : ''}
+                </div>`;
+
+        // Добавляем сообщение в контейнер сообщений
+        messagesDiv.innerHTML += messageElement;
+
+        // Прокручиваем контейнер сообщений вниз
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      } catch (error) {
+        console.error('Ошибка при обработке сообщения:', error);
+      }
+    });
+  });
+// Функция для выделения сообщений по дате
+function selectMessagesByDate(date) {
+  const messageElements = document.querySelectorAll('.message');
+  messageElements.forEach(messageElement => {
+    const messageTime = messageElement.querySelector('.time').textContent;
+    if (messageTime.includes(date)) {
+      const messageId = messageElement.dataset.id;
+      selectedMessages.set(messageId, true);
+      messageElement.classList.add('selected');
+    }
+  });
+  updateSelectedCount();
+}
+
+// Обработчик для кнопки "Выбрать по дате"
+document.getElementById('selectByDateBtn').addEventListener('click', () => {
+  const date = prompt('Введите дату в формате YYYY-MM-DD:', '');
+  if (date) {
+    selectMessagesByDate(date);
+  }
+});
+
+  // Загрузка чатов при загрузке страницы
+  window.onload = function () {
+    loadChats(); // Загружаем список чатов
+  };
+</script>
+</body>
+</html>
